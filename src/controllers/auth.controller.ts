@@ -97,12 +97,20 @@ export const refreshTokenController = async (refreshToken: string) => {
   }
 }
 
-/**
- * Hàm này thực hiện gửi yêu cầu lấy Google OAuth token dựa trên authorization code nhận được từ client-side.
- * @param {string} code - Authorization code được gửi từ client-side.
- * @returns {Object} - Đối tượng chứa Google OAuth token.
- */
-const getOauthGooleToken = async (code: string) => {
+
+type GoogleOAuthToken = {
+  access_token: string
+  expires_in: number
+  refresh_token: string
+  scope: string
+  token_type: string
+  id_token: string
+}
+
+// Gửi authorization code lên Google để lấy OAuth token
+const getOauthGooleToken = async (
+  code: string
+): Promise<GoogleOAuthToken> => {
   const body = {
     code,
     client_id: envConfig.GOOGLE_CLIENT_ID,
@@ -115,24 +123,23 @@ const getOauthGooleToken = async (code: string) => {
       'Content-Type': 'application/x-www-form-urlencoded'
     }
   })
-  return data as {
-    access_token: string
-    expires_in: number
-    refresh_token: string
-    scope: string
-    token_type: string
-    id_token: string
-  }
+  return data as GoogleOAuthToken
 }
 
-/**
- * Hàm này thực hiện gửi yêu cầu lấy thông tin người dùng từ Google dựa trên Google OAuth token.
- * @param {Object} tokens - Đối tượng chứa Google OAuth token.
- * @param {string} tokens.id_token - ID token được lấy từ Google OAuth.
- * @param {string} tokens.access_token - Access token được lấy từ Google OAuth.
- * @returns {Object} - Đối tượng chứa thông tin người dùng từ Google.
- */
-const getGoogleUser = async ({ id_token, access_token }: { id_token: string; access_token: string }) => {
+type GoogleUser = {
+  id: string
+  email: string
+  verified_email: boolean
+  name: string
+  given_name: string
+  family_name: string
+  picture: string
+}
+
+// Gửi yêu cầu lấy thông tin người dùng từ Google dựa trên Google OAuth token
+const getGoogleUser = async (
+  { id_token, access_token }: { id_token: string; access_token: string }
+): Promise<GoogleUser> => {
   const { data } = await axios.get('https://www.googleapis.com/oauth2/v1/userinfo', {
     params: {
       access_token,
@@ -142,15 +149,7 @@ const getGoogleUser = async ({ id_token, access_token }: { id_token: string; acc
       Authorization: `Bearer ${id_token}`
     }
   })
-  return data as {
-    id: string
-    email: string
-    verified_email: boolean
-    name: string
-    given_name: string
-    family_name: string
-    picture: string
-  }
+  return data as GoogleUser
 }
 
 export const loginGoogleController = async (code: string) => {
