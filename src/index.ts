@@ -50,12 +50,18 @@ const start = async () => {
     fastify.register(fastifyCookie)
     fastify.register(validatorCompilerPlugin)
     fastify.register(errorHandlerPlugin)
+
     fastify.register(fastifySocketIO, {
       cors: {
-        origin: envConfig.CLIENT_URL
-      }
+        origin: envConfig.CLIENT_URL,
+        methods: ['GET', 'POST'],
+        credentials: true
+      },
+      allowEIO3: true,
+      transports: ['websocket', 'polling']
     })
     fastify.register(socketPlugin)
+
     fastify.register(authRoutes, {
       prefix: '/auth'
     })
@@ -86,11 +92,15 @@ const start = async () => {
     fastify.register(indicatorRoutes, {
       prefix: '/indicators'
     })
+
     await initOwnerAccount()
     await fastify.listen({
-      port: envConfig.PORT
+      port: envConfig.PORT,
+      host: envConfig.HOST
     })
-    console.log(`Server đang chạy: ${API_URL}`)
+
+    console.log(`🚀 Server đang chạy: ${API_URL}`)
+    console.log(`🔌 Socket.IO ready on: ${API_URL}/socket.io/`)
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)
